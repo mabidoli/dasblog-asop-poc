@@ -103,8 +103,24 @@ input, ASOP.md §6.1) working as intended: step 2's gate (every rule has a
 test) still held, because these three became NEW rules with their own
 tests, not exceptions carved out of it.
 
-## Step 5 onward
+## Step 5 — facade-and-route-traffic
+
+- Write-back: `modernization/feed/FACADE.md`.
+- **Option (b) taken, stated plainly**: full in-process WebForms routing to
+  the .NET 10 component is impractical (different runtimes, no interop
+  bridge in this codebase — see FACADE.md for why). The facade contract
+  (same entries + config in, same RSS 2.0 XML out) is proven by both
+  legacy.yml and modern.yml independently asserting the SAME committed
+  golden files, on two different runtimes, in two different CI jobs.
+- Gate: `kind: deterministic`, check = "CI job running the facade
+  integration test suite is green at this commit, for both the
+  legacy-path and new-path assertions." **PASSED** — this is the same
+  legacy.yml/modern.yml pair from steps 3/4, both green at the commits
+  cited there; re-verified together as the facade proof per FACADE.md's
+  reasoning rather than treated as a separate new job.
+
+## Step 6 onward
 
 Not yet executed at the time of writing this file - see
 `asop/runs/feed/v1/ADJUDICATION.md` (written once the run reaches a natural
-checkpoint) for the self-revision read on steps 1-3.
+checkpoint) for the self-revision read on steps 1-5.
