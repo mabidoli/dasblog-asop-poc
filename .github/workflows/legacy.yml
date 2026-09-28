@@ -44,6 +44,12 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: List installed .NET Framework reference-assembly versions
+        run: |
+          $root = "C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework"
+          if (Test-Path $root) { Get-ChildItem $root | Select-Object -ExpandProperty Name }
+          else { Write-Host "$root does not exist" }
+
       - name: Build source/DasBlog.sln (Debug | Any CPU)
         run: >
           msbuild "source\DasBlog.sln"
