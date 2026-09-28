@@ -205,8 +205,17 @@ namespace newtelligence.DasBlog.Web.Core.Test
 		{
 			string binDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 			DirectoryInfo dir = new DirectoryInfo(binDir);
-			// bin/Debug -> Test -> newtelligence.DasBlog.Web.Core -> source -> repo root
-			for (int i = 0; i < 5; i++)
+			// This project's OutputPath is "bin\" directly (no \Debug\
+			// subfolder, unlike slice 1's Web.Services.Test project) - see
+			// the .csproj. bin -> Test -> newtelligence.DasBlog.Web.Core ->
+			// source -> repo root is 4 hops, not 5 (first capture-golden
+			// run for this slice wrote its output one level too high,
+			// D:\a\<repo>\modernization\... instead of
+			// D:\a\<repo>\<repo>\modernization\..., and "Show captured
+			// golden files"/the uploaded artifact silently didn't find
+			// anything new as a result - fixed by counting the actual
+			// path segments instead of copying slice 1's hop count).
+			for (int i = 0; i < 4; i++)
 			{
 				dir = dir.Parent;
 			}
