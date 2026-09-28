@@ -98,6 +98,13 @@ either. See `ADJUDICATION.md` for the proposal this generates for v3.
   3/4, both green at the commits cited there, re-verified together as the
   facade proof per `FACADE.md`'s reasoning.
 
-## Step 6 onward
+## Step 6 — review-and-open-pr
 
-Not yet executed at the time of writing this file.
+- Write-back: PR opened at
+  <https://github.com/mabidoli/dasblog-asop-poc/pull/2>, base `v1-final`
+  (a branch pinned to the commit where PR #1's slice-1 evidence was
+  complete, so this PR's diff is scoped to v2-authoring +
+  Windows-packaging + slice-2 work only). Left explicitly unmerged.
+- Per v2's `definition_of_done` addition: the PR states plainly that step
+  1 is still PROVISIONAL under PARK-AND-CONTINUE.
+- Gate: `kind: human`, verifier `mabidoli`. **Open.**
