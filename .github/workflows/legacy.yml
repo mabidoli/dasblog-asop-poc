@@ -14,13 +14,13 @@ name: legacy
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "source/**"
       - "lib/**"
       - ".github/workflows/legacy.yml"
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - "source/**"
       - "lib/**"
