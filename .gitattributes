@@ -1,7 +1,29 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Custom for Visual Studio
+*.cs     diff=csharp
+
+# Standard to msysgit
+*.doc	 diff=astextplain
+*.DOC	 diff=astextplain
+*.docx diff=astextplain
+*.DOCX diff=astextplain
+*.dot  diff=astextplain
+*.DOT  diff=astextplain
+*.pdf  diff=astextplain
+*.PDF	 diff=astextplain
+*.rtf	 diff=astextplain
+*.RTF	 diff=astextplain
+
+# --- POC addition below (mabidoli/dasblog-asop-poc) ---
+#
 # Golden files are byte-for-byte oracles (ASOP step 3/4 gates compare
-# actual output against them literally). Git must never rewrite their line
-# endings on checkout - a Windows runner's default autocrlf=true silently
-# turned committed LF into CRLF, which made the characterization tests fail
-# against their own captured output on the very next legacy.yml run. See
-# asop/runs/feed/v1/EVIDENCE.md.
+# actual output against them literally). The `* text=auto` rule above is
+# exactly the mechanism that bit this POC once already: it let a
+# windows-latest runner's checkout silently rewrite the committed (pure-LF)
+# golden files to CRLF, which then failed the characterization tests
+# against their own just-captured output on the very next run. See
+# asop/runs/feed/v1/EVIDENCE.md. This override (later patterns win) takes
+# golden files out of that normalization entirely.
 modernization/**/golden/** -text
