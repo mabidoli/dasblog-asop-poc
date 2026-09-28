@@ -52,7 +52,15 @@ jobs:
         run: |
           $dll = "source\newtelligence.DasBlog.Web.Services\Test\bin\Debug\newtelligence.DasBlog.Web.Services.Test.dll"
           $runner = (Resolve-Path "nunit.runners\tools\nunit-console.exe").Path
-          & $runner $dll /run:newtelligence.DasBlog.Web.Services.Test.FeedCharacterization.RssFeedCharacterizationTests /result:CaptureResult.xml /nologo
+          # /noshadow: without it, nunit-console runs the test DLL from a
+          # shadow-copy temp directory, so Assembly.GetExecutingAssembly().Location
+          # inside the test (used to find the repo root - see GoldenFilePath
+          # in RssFeedCharacterizationTests.cs) points into
+          # AppData\Local\Temp\nunit20\ShadowCopyCache\... instead of the
+          # actual checkout, and the captured files land somewhere nobody
+          # looks (found via this run's own "Captured golden file: ..." log
+          # line pointing at the temp path).
+          & $runner $dll /run:newtelligence.DasBlog.Web.Services.Test.FeedCharacterization.RssFeedCharacterizationTests /result:CaptureResult.xml /nologo /noshadow
           # Capture mode tests call Assert.Ignore() on success (see
           # RssFeedCharacterizationTests.AssertMatchesGolden) - nunit-console
           # exits non-zero for Ignored tests, which is expected here and not

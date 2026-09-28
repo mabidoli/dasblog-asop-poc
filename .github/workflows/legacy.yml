@@ -101,7 +101,11 @@ jobs:
           # deployed under IIS. Standing up IIS is out of scope for this
           # build+test gate; see the [Category] on those tests and
           # asop/runs/feed/v1/EVIDENCE.md.
-          & $runner $dlls /result:TestResult.xml /nologo /exclude:RequiresLiveServer
+          # /noshadow: the feed characterization tests (FeedCharacterization/)
+          # resolve the repo root from their own assembly location to find
+          # modernization/feed/golden/ - shadow-copying breaks that. See
+          # capture-golden.yml's comment on the same flag.
+          & $runner $dlls /result:TestResult.xml /nologo /exclude:RequiresLiveServer /noshadow
           if ($LASTEXITCODE -ne 0) {
             Write-Error "nunit-console exited with code $LASTEXITCODE"
             exit $LASTEXITCODE
