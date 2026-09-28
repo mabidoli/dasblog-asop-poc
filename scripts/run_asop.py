@@ -17,11 +17,15 @@ What this script actually does, per step, in ASOP order:
   1. Print the step's full text (purpose, entry_check, inputs,
      definition_of_done, validation, common_mistakes) — this is the
      "instructions" a human OR an executor needs before starting.
-  2. If the step's gate is `human`: STOP and wait for an interactive
-     confirmation. This script does not simulate a human gate — seed
-     asop/runs/feed/v1/ADJUDICATION.md item 1 (this POC's own executor
-     proceeding past an unanswered human gate) is exactly the mistake this
-     behavior exists to not repeat.
+  2. If the step's gate is `human`: wait for an interactive answer -
+     'approved' (gate closes normally), 'park' (PARK-AND-CONTINUE, v2 —
+     see asop/strangler-slice-a-feature/CHANGELOG.md: proceed, but every
+     downstream step's record and write_back are marked PROVISIONAL until
+     this gate later closes), or anything else (stop the run here). This
+     script never SIMULATES an answer on the human's behalf — v1's own
+     run (asop/runs/feed/v1/ADJUDICATION.md item 1) proceeded past an
+     unanswered gate silently; v2's fix is to make proceeding past one
+     possible only visibly, via 'park', never by default.
   3. If the step's gate is `deterministic` and --execute was passed:
      dispatch the step to `claude -p` (Claude Code CLI, non-interactive)
      with the step's text as the prompt, in the repo root, then run the
@@ -147,6 +151,8 @@ def main() -> int:
     print(f"Run log: {log_path}")
     print("=" * 72)
 
+    provisional = False  # PARK-AND-CONTINUE state - see below.
+
     for position, step in enumerate(steps, start=1):
         # Step numbers are POSITIONAL, not a literal `step:` field - per
         # ASOP.md §3.2/§3.4 and this repo's own asop/sop.py validate_step:
@@ -168,7 +174,14 @@ def main() -> int:
             "role": step.get("role"),
             "gate_kind": gate_kind,
             "at": datetime.now(timezone.utc).isoformat(),
+            # Inherited from any upstream 'park' answer - see the human-gate
+            # branch below. True here means an upstream human gate is still
+            # open and this step's own write-back is PROVISIONAL until it
+            # closes (v2 semantics - CHANGELOG.md).
+            "provisional": provisional,
         }
+        if provisional:
+            print("(PROVISIONAL - an upstream human gate is still open)")
 
         if gate_kind == "human":
             verifier = gate.get("verifier", "a human")
@@ -178,19 +191,35 @@ def main() -> int:
                 record["executor"] = None
                 record["result"] = "dry-run: not executed"
             else:
+                # PARK-AND-CONTINUE (v2 — see
+                # asop/strangler-slice-a-feature/CHANGELOG.md and this
+                # ASOP's own top-level `purpose`). v1's runner only knew
+                # "approved" or "stop the whole run" - that's what let v1's
+                # own executor proceed silently past an open gate instead
+                # of proceeding VISIBLY. v2's runner names the third
+                # option: 'park' continues, with every downstream
+                # step's record and write_back marked PROVISIONAL, exactly
+                # as the ASOP text requires.
                 print(
-                    "\nThis run STOPS here until a human answers this gate — "
-                    "see asop/runs/feed/v1/ADJUDICATION.md item 1 for why "
-                    "this script refuses to simulate that answer."
+                    "\nThree answers: 'approved' (gate closes normally),\n"
+                    "'park' (PARK-AND-CONTINUE - proceed, mark downstream\n"
+                    "steps PROVISIONAL until this gate later closes),\n"
+                    "anything else (stop the run here)."
                 )
-                answer = input(f"Type 'approved' if {verifier} approves this step, anything else to stop: ")
+                answer = input(f"{verifier}'s answer: ").strip().lower()
                 record["human_answer"] = answer
-                if answer.strip().lower() != "approved":
-                    record["result"] = "stopped: human gate not approved"
+                if answer == "approved":
+                    record["result"] = "approved"
+                    provisional = False
+                elif answer == "park":
+                    record["result"] = "parked: proceeding, downstream marked PROVISIONAL"
+                    provisional = True
+                    print("Parking - downstream steps proceed but are PROVISIONAL until this gate closes.")
+                else:
+                    record["result"] = "stopped: human gate neither approved nor parked"
                     _append_log(log_path, record)
-                    print("Stopping run (human gate not approved).")
+                    print("Stopping run.")
                     return 1
-                record["result"] = "approved"
             _append_log(log_path, record)
             continue
 
@@ -210,7 +239,9 @@ def main() -> int:
         elif not execute:
             record["result"] = "described only (pass --execute to run)"
         else:
-            record["result"] = "gate PASSED" if gate_exit == 0 else f"gate FAILED (exit {gate_exit})"
+            passed = gate_exit == 0
+            suffix = " [PROVISIONAL]" if provisional and passed else ""
+            record["result"] = (f"gate PASSED{suffix}" if passed else f"gate FAILED (exit {gate_exit})")
             print(record["result"])
 
         _append_log(log_path, record)
