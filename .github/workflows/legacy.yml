@@ -76,12 +76,19 @@ jobs:
           "dlls<<EOF`n$joined`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Install NUnit 2.x console runner
-        run: choco install nunit-console-runner --version=2.6.4 -y --no-progress
+        # The chocolatey package "nunit-console-runner" no longer exists on
+        # community.chocolatey.org. These test assemblies are compiled
+        # against the vendored lib/nunit.framework.dll (NUnit 2.x), so pull
+        # the matching console runner straight from its NuGet package instead.
+        run: |
+          Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/NUnit.Runners/2.6.4" -OutFile nunit.runners.zip
+          Expand-Archive -Path nunit.runners.zip -DestinationPath nunit.runners
+          Get-ChildItem -Recurse nunit.runners\tools\nunit-console.exe
 
       - name: Run tests (NUnit 2.6.4)
         run: |
           $dlls = "${{ steps.find-tests.outputs.dlls }}" -split "`n" | Where-Object { $_.Trim() -ne "" }
-          $runner = "C:\ProgramData\chocolatey\lib\nunit-console-runner\tools\nunit-console.exe"
+          $runner = (Resolve-Path "nunit.runners\tools\nunit-console.exe").Path
           & $runner $dlls /result:TestResult.xml /nologo
           if ($LASTEXITCODE -ne 0) {
             Write-Error "nunit-console exited with code $LASTEXITCODE"
