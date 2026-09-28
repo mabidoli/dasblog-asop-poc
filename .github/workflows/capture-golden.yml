@@ -40,15 +40,6 @@ jobs:
           /m:1
           /nologo
           /v:minimal
-          /fl /flp:logfile=msbuild.log;verbosity=detailed
-
-      - name: Show reference-resolution diagnostics for the Test project
-        if: always()
-        run: |
-          Select-String -Path msbuild.log -Pattern 'Web\.Services\.Test\.csproj' -Context 0,0 |
-            Select-String -Pattern 'Primary reference|Unified reference|HintPath|Considered|Could not|CS0234|CS0246|csc\.exe' |
-            Select-Object -First 200 |
-            ForEach-Object { $_.Line }
 
       - name: Install NUnit 2.6.4 console runner
         run: |
