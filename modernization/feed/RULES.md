@@ -71,6 +71,32 @@ characterization test in `tests-legacy/` (checked by
   content-filter chain is fixed OFF in every fixture — RULE-feed-D16.)
   `SyndicationServiceBase.cs:75-98`
 
+Discovered at step 4 (implement-on-dotnet-10), from the golden files rather
+than a fresh source read — real per ASOP.md's self-revision principle
+(divergence is input), not a gap in step 2:
+
+- **RULE-feed-17** — Channel `<generator>` defaults to `"newtelligence
+  dasBlog " + <the Web.Services assembly's own AssemblyVersion>` — captured
+  as the literal string `"newtelligence dasBlog 4.0.0.0"`. A port has
+  nothing meaningful to reflect this value from, so it's pinned as a
+  literal constant, coupled to the legacy build's `AssemblyInfo.cs` at
+  golden-capture time. `Rss.cs` (legacy `RssChannel` constructor)
+- **RULE-feed-18** — The `xmlns` declaration order on `<rss>` for the
+  custom namespaces is `trackback, dc, pingback` in the captured golden
+  files — not the `dc, trackback, pingback` order the legacy code adds
+  them in (`SyndicationServiceImplementation.cs:250-252`). An
+  `XmlSerializerNamespaces` enumeration-order artifact of the legacy
+  runtime, not a business rule; matched explicitly rather than derived.
+- **RULE-feed-19** — `XmlSerializer` auto-declares `xmlns:xsi` and
+  `xmlns:xsd` on every root element regardless of what the code adds, and
+  neither is ever referenced by anything this feed actually writes.
+  Legacy (.NET Framework) orders them `xsd` before `xsi`; .NET 10 orders
+  them `xsi` before `xsd`, and this order could not be changed by
+  insertion order on the .NET 10 side in any combination tried — the
+  runtime forces it. Normalized as a textual post-serialization swap in
+  the .NET 10 port (`RssFeedSerializer.NormalizeXsiXsdOrder`), documented
+  there, not silently absorbed into a "close enough" comparison.
+
 ## Explicitly deferred (named, not silently dropped)
 
 Every one of these is a real rule in the legacy code that this slice does
