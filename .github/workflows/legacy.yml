@@ -17,12 +17,14 @@ on:
     branches: [master]
     paths:
       - "source/**"
+      - "modernization/**"
       - "lib/**"
       - ".github/workflows/legacy.yml"
   pull_request:
     branches: [master]
     paths:
       - "source/**"
+      - "modernization/**"
       - "lib/**"
       - ".github/workflows/legacy.yml"
   workflow_dispatch: {}
