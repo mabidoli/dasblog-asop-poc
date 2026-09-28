@@ -130,9 +130,20 @@ namespace newtelligence.DasBlog.Web.Core.Test
 			feedback.FeedbackType = "comment";
 			feedback.TargetEntryId = null;
 
-			TargetInvocationException ex = Assert.Throws<TargetInvocationException>(
-				delegate { ConvertToAkismetComment(feedback); });
-			Assert.IsInstanceOf<NullReferenceException>(ex.InnerException);
+			// Plain try/catch, not Assert.Throws<T> - the vendored
+			// lib/nunit.framework.dll (NUnit 2.x, pre-generic-assertions)
+			// doesn't have it (CS0117, caught by legacy.yml's own build
+			// gate on the first attempt at this test).
+			try
+			{
+				ConvertToAkismetComment(feedback);
+				Assert.Fail("Expected a TargetInvocationException wrapping a NullReferenceException.");
+			}
+			catch (TargetInvocationException ex)
+			{
+				Assert.IsTrue(ex.InnerException is NullReferenceException,
+					"Expected NullReferenceException, got " + ex.InnerException);
+			}
 		}
 
 		private void AssertMatchesGolden(string fixtureName, IFeedback feedback)
