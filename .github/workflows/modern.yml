@@ -1,0 +1,52 @@
+name: modern
+
+# Builds and tests the .NET 10 port (src-modern/) on ubuntu-latest. Per
+# asop/strangler-slice-a-feature/v1.yaml step 4, this is one half of the
+# "golden-file diff = 0" gate - see scripts/golden-diff.py for why there's
+# no separate legacy-vs-modern diff step here: both this job and legacy.yml
+# assert against the SAME committed golden files
+# (modernization/<slice>/golden/*.xml), which proves legacy==modern by
+# transitivity when both are green.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "src-modern/**"
+      - "modernization/**"
+      - "scripts/golden-diff.py"
+      - ".github/workflows/modern.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "src-modern/**"
+      - "modernization/**"
+      - "scripts/golden-diff.py"
+      - ".github/workflows/modern.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: dotnet --info
+        run: dotnet --info
+
+      - name: Build src-modern/DasBlog.Feed
+        run: dotnet build src-modern/DasBlog.Feed/DasBlog.Feed.csproj --nologo
+
+      - name: Golden-diff gate - feed (dotnet test against modernization/feed/golden/*.xml)
+        run: python3 scripts/golden-diff.py src-modern/DasBlog.Feed.Tests/DasBlog.Feed.Tests.csproj
+
+      - name: Build src-modern/DasBlog.Spam
+        run: dotnet build src-modern/DasBlog.Spam/DasBlog.Spam.csproj --nologo
+
+      - name: Golden-diff gate - spam (dotnet test against modernization/spam/golden/*.txt)
+        run: python3 scripts/golden-diff.py src-modern/DasBlog.Spam.Tests/DasBlog.Spam.Tests.csproj

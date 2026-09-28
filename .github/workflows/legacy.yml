@@ -1,0 +1,122 @@
+name: legacy
+
+# Builds and tests the ORIGINAL .NET Framework solution (source/DasBlog.sln) on
+# windows-latest. This is the "legacy" deterministic gate the ASOP under asop/
+# points at: liveness (build+test green) here is a precondition for, but not
+# the same claim as, behaviour-preserved (that's the golden-file diff gate in
+# modernization/<slice>/, comparing this build's output against the .NET 10
+# port's output).
+#
+# There is no NuGet restore step: every third-party dependency in this
+# solution is a vendored DLL under lib/, referenced by HintPath. See
+# asop/runs/feed/v1/EVIDENCE.md for what it took to get this green the first
+# time.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "source/**"
+      - "modernization/**"
+      - "lib/**"
+      - ".github/workflows/legacy.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "source/**"
+      - "modernization/**"
+      - "lib/**"
+      - ".github/workflows/legacy.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show installed toolchain
+        run: |
+          dotnet --info
+          Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio\2022" -ErrorAction SilentlyContinue
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: List installed .NET Framework reference-assembly versions
+        run: |
+          $root = "C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework"
+          if (Test-Path $root) { Get-ChildItem $root | Select-Object -ExpandProperty Name }
+          else { Write-Host "$root does not exist" }
+
+      - name: Build source/DasBlog.sln (Debug | Any CPU)
+        run: >
+          msbuild "source\DasBlog.sln"
+          /p:Configuration=Debug
+          /p:Platform="Any CPU"
+          /m:1
+          /nologo
+          /v:minimal
+          /p:TreatWarningsAsErrors=false
+
+      - name: Locate built test assemblies
+        id: find-tests
+        run: |
+          $dlls = Get-ChildItem -Path source -Recurse -Include *.Test.dll,*.test.dll |
+            Where-Object { $_.FullName -match '\\Test\\bin\\' } |
+            Select-Object -ExpandProperty FullName -Unique
+          if (-not $dlls) {
+            Write-Error "No test assemblies found under source/**/Test/bin/"
+            exit 1
+          }
+          Write-Host "Found test assemblies:"
+          $dlls | ForEach-Object { Write-Host " - $_" }
+          $joined = $dlls -join "`n"
+          "dlls<<EOF`n$joined`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Install NUnit 2.x console runner
+        # The chocolatey package "nunit-console-runner" no longer exists on
+        # community.chocolatey.org. These test assemblies are compiled
+        # against the vendored lib/nunit.framework.dll (NUnit 2.x), so pull
+        # the matching console runner straight from its NuGet package instead.
+        run: |
+          Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/NUnit.Runners/2.6.4" -OutFile nunit.runners.zip
+          Expand-Archive -Path nunit.runners.zip -DestinationPath nunit.runners
+          Get-ChildItem -Recurse nunit.runners\tools\nunit-console.exe
+
+      - name: Run tests (NUnit 2.6.4)
+        run: |
+          # Trim each line: the multiline GITHUB_OUTPUT payload carries CRLF,
+          # and a stray trailing `r on a path is an "illegal character" as
+          # far as nunit-console's own path parsing is concerned.
+          $dlls = "${{ steps.find-tests.outputs.dlls }}" -split "`n" |
+            ForEach-Object { $_.Trim() } |
+            Where-Object { $_ -ne "" }
+          Write-Host "Test assemblies to run:"
+          $dlls | ForEach-Object { Write-Host " - [$_]" }
+          $runner = (Resolve-Path "nunit.runners\tools\nunit-console.exe").Path
+          # RequiresLiveServer: two ConfigServiceTester tests call a live
+          # ASMX endpoint (http://localhost/omar/...) that needs the site
+          # deployed under IIS. Standing up IIS is out of scope for this
+          # build+test gate; see the [Category] on those tests and
+          # asop/runs/feed/v1/EVIDENCE.md.
+          # /noshadow: the feed characterization tests (FeedCharacterization/)
+          # resolve the repo root from their own assembly location to find
+          # modernization/feed/golden/ - shadow-copying breaks that. See
+          # capture-golden.yml's comment on the same flag.
+          & $runner $dlls /result:TestResult.xml /nologo /exclude:RequiresLiveServer /noshadow
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "nunit-console exited with code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-test-results
+          path: TestResult.xml
+          if-no-files-found: warn

@@ -18,7 +18,12 @@ namespace newtelligence.DasBlog.Runtime.Test
 		private CrosspostSite site = new CrosspostSite("localhost", "localhost", 80, "/dasblog/blogger.aspx");
 
 		#region Tests
+		// Both tests below XML-RPC a live http://localhost/dasblog/blogger.aspx
+		// endpoint (see `site` above) - needs the site deployed and running
+		// under IIS, which the legacy CI gate does not stand up. Excluded via
+		// /exclude:RequiresLiveServer. See asop/runs/feed/v1/EVIDENCE.md.
 		[Test]
+		[Category("RequiresLiveServer")]
 		public void CreateMetaWeblogPost()
 		{
 			site.ApiType = "metaweblog";
@@ -48,6 +53,7 @@ namespace newtelligence.DasBlog.Runtime.Test
 		}
 
 		[Test]
+		[Category("RequiresLiveServer")]
 		public void EditMetaWeblogPost()
 		{
 			Entry testEntry = TestEntry.CreateEntry("MetaWeblog " + DateTime.Now.ToLongTimeString(), 5, 2);

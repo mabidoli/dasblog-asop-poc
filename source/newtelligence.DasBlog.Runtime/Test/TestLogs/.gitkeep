@@ -1,0 +1,9 @@
+# Keeps this directory present after checkout.
+#
+# TestBaseLocal.SetUpForTests() and TestBaseServer.SetUpForTests()
+# (newtelligence.DasBlog.Runtime.Test) both assert this directory exists
+# before running any test in their fixtures. The .csproj already declares
+# it (<Folder Include="TestLogs\" />) but an EMPTY directory is not
+# representable in git, so a fresh checkout never had it — every test in
+# both fixtures failed its TestFixtureSetUp with "Expected: True, But was:
+# False" until this placeholder was added. See asop/runs/feed/v1/EVIDENCE.md.

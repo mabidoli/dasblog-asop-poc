@@ -15,3 +15,15 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+# --- POC addition below (mabidoli/dasblog-asop-poc) ---
+#
+# Golden files are byte-for-byte oracles (ASOP step 3/4 gates compare
+# actual output against them literally). The `* text=auto` rule above is
+# exactly the mechanism that bit this POC once already: it let a
+# windows-latest runner's checkout silently rewrite the committed (pure-LF)
+# golden files to CRLF, which then failed the characterization tests
+# against their own just-captured output on the very next run. See
+# asop/runs/feed/v1/EVIDENCE.md. This override (later patterns win) takes
+# golden files out of that normalization entirely.
+modernization/**/golden/** -text

@@ -29,7 +29,13 @@ namespace newtelligence.DasBlog.Web.Services.Test
 			// every test.
 		}
 
+		// Hits a live ASMX endpoint (http://localhost/omar/configeditingservice.asmx
+		// per the checked-in Web Reference proxy) - needs the site deployed and
+		// running under IIS, which the legacy CI gate does not stand up. Excluded
+		// from `legacy.yml` via /exclude:RequiresLiveServer. See
+		// asop/runs/feed/v1/EVIDENCE.md.
 		[Test]
+		[Category("RequiresLiveServer")]
 		public void GetBlogRolls()
 		{
 			string[] blogRolls = service.EnumBlogrolls();
@@ -46,6 +52,7 @@ namespace newtelligence.DasBlog.Web.Services.Test
 		}
 
 		[Test]
+		[Category("RequiresLiveServer")]
 		public void GetSiteConfig()
 		{
 			ConfigService.SiteConfig siteConfig = service.GetSiteConfig();

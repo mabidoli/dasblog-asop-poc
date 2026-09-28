@@ -19,10 +19,20 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lesnikowski.Pawel.Mail.Pop3", "Lesnikowski.Pawel.Mail.Pop3\Lesnikowski.Pawel.Mail.Pop3.csproj", "{0FED5636-EE32-402E-A6C6-F238916F6DD3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "newtelligence.DasBlog.Web.Services.Test", "newtelligence.DasBlog.Web.Services\Test\newtelligence.DasBlog.Web.Services.Test.csproj", "{1BCF3485-FFC4-46A2-A87A-801F53FB34C8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7A9A0C81-84AE-4C6F-9489-528B5B97F426} = {7A9A0C81-84AE-4C6F-9489-528B5B97F426}
+		{2B6D1F60-C5D8-4CB9-89D6-A4AF42275852} = {2B6D1F60-C5D8-4CB9-89D6-A4AF42275852}
+		{38B69883-A9FB-498E-9CC7-95AB89DD7DC4} = {38B69883-A9FB-498E-9CC7-95AB89DD7DC4}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DasBlogUpgrader", "DasBlogUpgrader\DasBlogUpgrader.csproj", "{0A49C510-642B-411D-B621-13450A29A31B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "newtelligence.DasBlog.Web.Core.Test", "newtelligence.DasBlog.Web.Core\Test\newtelligence.DasBlog.Web.Core.Test.csproj", "{2488D736-9442-4FCB-997C-7E58A6C319B1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{38B69883-A9FB-498E-9CC7-95AB89DD7DC4} = {38B69883-A9FB-498E-9CC7-95AB89DD7DC4}
+		{4DC29536-2515-4B8D-AEB6-EC397B950881} = {4DC29536-2515-4B8D-AEB6-EC397B950881}
+		{2B6D1F60-C5D8-4CB9-89D6-A4AF42275852} = {2B6D1F60-C5D8-4CB9-89D6-A4AF42275852}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subtext.Akismet", "Subtext.Akismet\Subtext.Akismet.csproj", "{4DC29536-2515-4B8D-AEB6-EC397B950881}"
 EndProject

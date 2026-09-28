@@ -1,0 +1,9 @@
+Author: Jane Commenter
+AuthorEmail: jane@example.test
+AuthorUrl: http://jane.example.test/
+Content: Great post!
+Referer: http://referrer.example.test/
+Permalink: (null)
+UserAgent: Mozilla/5.0 (characterization fixture)
+CommentType: comment
+IpAddress: 203.0.113.7
