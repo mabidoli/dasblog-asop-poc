@@ -1,0 +1,74 @@
+name: capture-golden
+
+# One-off, manually-triggered: builds the LEGACY solution and runs the feed
+# characterization tests (source/newtelligence.DasBlog.Web.Services/Test/FeedCharacterization/)
+# with DASBLOG_CAPTURE_GOLDEN=1, which makes them WRITE their actual output
+# to modernization/feed/golden/ instead of comparing against it, then
+# uploads that directory as a build artifact.
+#
+# This is how a golden file's provenance is established: run the real
+# legacy code, on the only place it can actually run (windows-latest - see
+# legacy.yml), capture what it actually produces, and hand it to a human to
+# review before it's committed as ground truth. Nothing here decides
+# whether the captured output is CORRECT - it only proves what the legacy
+# build ACTUALLY does today, which is the whole point of a characterization
+# test (ASOP step 3, asop/strangler-slice-a-feature/v1.yaml).
+#
+# Re-run only when a fixture in RssFeedCharacterizationTests.cs changes and
+# the golden files need to be recaptured - not on every push.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  capture:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build source/DasBlog.sln (Debug | Any CPU)
+        run: >
+          msbuild "source\DasBlog.sln"
+          /p:Configuration=Debug
+          /p:Platform="Any CPU"
+          /m
+          /nologo
+          /v:minimal
+
+      - name: Install NUnit 2.6.4 console runner
+        run: |
+          Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/NUnit.Runners/2.6.4" -OutFile nunit.runners.zip
+          Expand-Archive -Path nunit.runners.zip -DestinationPath nunit.runners
+
+      - name: Run feed characterization tests in CAPTURE mode
+        env:
+          DASBLOG_CAPTURE_GOLDEN: "1"
+        run: |
+          $dll = "source\newtelligence.DasBlog.Web.Services\Test\bin\Debug\newtelligence.DasBlog.Web.Services.Test.dll"
+          $runner = (Resolve-Path "nunit.runners\tools\nunit-console.exe").Path
+          & $runner $dll /run:newtelligence.DasBlog.Web.Services.Test.FeedCharacterization.RssFeedCharacterizationTests /result:CaptureResult.xml /nologo
+          # Capture mode tests call Assert.Ignore() on success (see
+          # RssFeedCharacterizationTests.AssertMatchesGolden) - nunit-console
+          # exits non-zero for Ignored tests, which is expected here and not
+          # a failure of this job; a real Error/Failure still fails below.
+          Get-Content CaptureResult.xml | Select-String "result=`"Failure`"|result=`"Error`"" | Write-Host
+          if (Select-String -Path CaptureResult.xml -Pattern 'result="Failure"|result="Error"' -Quiet) {
+            Write-Error "A characterization test actually failed/errored during capture (not just Ignored) - see CaptureResult.xml"
+            exit 1
+          }
+
+      - name: Show captured golden files
+        run: Get-ChildItem modernization\feed\golden -Recurse | ForEach-Object { Write-Host $_.FullName }
+
+      - name: Upload captured golden files
+        uses: actions/upload-artifact@v4
+        with:
+          name: feed-golden-captured
+          path: modernization/feed/golden/
+          if-no-files-found: error
