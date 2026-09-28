@@ -87,7 +87,14 @@ jobs:
 
       - name: Run tests (NUnit 2.6.4)
         run: |
-          $dlls = "${{ steps.find-tests.outputs.dlls }}" -split "`n" | Where-Object { $_.Trim() -ne "" }
+          # Trim each line: the multiline GITHUB_OUTPUT payload carries CRLF,
+          # and a stray trailing `r on a path is an "illegal character" as
+          # far as nunit-console's own path parsing is concerned.
+          $dlls = "${{ steps.find-tests.outputs.dlls }}" -split "`n" |
+            ForEach-Object { $_.Trim() } |
+            Where-Object { $_ -ne "" }
+          Write-Host "Test assemblies to run:"
+          $dlls | ForEach-Object { Write-Host " - [$_]" }
           $runner = (Resolve-Path "nunit.runners\tools\nunit-console.exe").Path
           & $runner $dlls /result:TestResult.xml /nologo
           if ($LASTEXITCODE -ne 0) {
