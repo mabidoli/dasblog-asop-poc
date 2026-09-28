@@ -1,0 +1,37 @@
+<rss xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pingback="http://madskills.com/public/xml/rss/module/pingback/" version="2.0">
+  <channel>
+    <title>Test Blog</title>
+    <link>http://example.test/</link>
+    <description>A test blog for feed characterization</description>
+    <language>en-US</language>
+    <copyright>Copyright 2003, Test Author</copyright>
+    <lastBuildDate>Fri, 01 Aug 2003 09:00:00 GMT</lastBuildDate>
+    <generator>newtelligence dasBlog 4.0.0.0</generator>
+    <managingEditor>test@example.test</managingEditor>
+    <webMaster>test@example.test</webMaster>
+    <item xml:lang="en-US">
+      <trackback:ping>http://example.test/Trackback.aspx?guid=2003-08-01T090000Z</trackback:ping>
+      <pingback:server>http://example.test/pingback.aspx</pingback:server>
+      <pingback:target>http://example.test/PermaLink.aspx?guid=2003-08-01T090000Z</pingback:target>
+      <dc:creator />
+      <title>Second post, newer</title>
+      <guid isPermaLink="false">http://example.test/PermaLink.aspx?guid=2003-08-01T090000Z</guid>
+      <link>http://example.test/PermaLink.aspx?guid=2003-08-01T090000Z</link>
+      <pubDate>Fri, 01 Aug 2003 09:00:00 GMT</pubDate>
+      <description>&lt;div&gt;&lt;p&gt;Full content used because Description is blank.&lt;/p&gt;&lt;/div&gt;</description>
+    </item>
+    <item xml:lang="en-US">
+      <trackback:ping>http://example.test/Trackback.aspx?guid=2003-07-31T120000Z</trackback:ping>
+      <pingback:server>http://example.test/pingback.aspx</pingback:server>
+      <pingback:target>http://example.test/PermaLink.aspx?guid=2003-07-31T120000Z</pingback:target>
+      <dc:creator />
+      <title>First post</title>
+      <guid isPermaLink="false">http://example.test/PermaLink.aspx?guid=2003-07-31T120000Z</guid>
+      <link>http://example.test/PermaLink.aspx?guid=2003-07-31T120000Z</link>
+      <pubDate>Thu, 31 Jul 2003 12:00:00 GMT</pubDate>
+      <description>A short description.</description>
+      <category>General/Misc</category>
+      <category>Announcements</category>
+    </item>
+  </channel>
+</rss>
