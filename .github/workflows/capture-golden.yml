@@ -32,16 +32,6 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: DIAGNOSTIC - build the Test project directly (bypass the .sln)
-        continue-on-error: true
-        run: >
-          msbuild "source\newtelligence.DasBlog.Web.Services\Test\newtelligence.DasBlog.Web.Services.Test.csproj"
-          /t:Build
-          /p:Configuration=Debug
-          /p:Platform="AnyCPU"
-          /nologo
-          /v:normal
-
       - name: Build source/DasBlog.sln (Debug | Any CPU)
         run: >
           msbuild "source\DasBlog.sln"
