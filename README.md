@@ -10,6 +10,11 @@
 >   dependency of this POC): [poppastring/dasblog-core](https://github.com/poppastring/dasblog-core)
 > - The ASOP that drives the modernization work, and the evidence for each run, live under
 >   [`asop/`](./asop) in this repo.
+> - **Clone with `git clone --recursive`** — [`harness/`](./harness) is a git submodule
+>   ([agentic-co/agentic-co-harness](https://github.com/agentic-co/agentic-co-harness)); a
+>   plain clone leaves it empty (`git submodule update --init --recursive` fixes an existing
+>   checkout). Running on Windows: see [`RUNBOOK-WINDOWS.md`](./RUNBOOK-WINDOWS.md). Plan and
+>   iteration loop: [`PLAN.md`](./PLAN.md).
 >
 > Everything below the next heading is the original upstream README, unmodified.
 

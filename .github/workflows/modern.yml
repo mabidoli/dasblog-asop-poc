@@ -42,5 +42,11 @@ jobs:
       - name: Build src-modern/DasBlog.Feed
         run: dotnet build src-modern/DasBlog.Feed/DasBlog.Feed.csproj --nologo
 
-      - name: Golden-diff gate (dotnet test against modernization/feed/golden/*.xml)
+      - name: Golden-diff gate - feed (dotnet test against modernization/feed/golden/*.xml)
         run: python3 scripts/golden-diff.py src-modern/DasBlog.Feed.Tests/DasBlog.Feed.Tests.csproj
+
+      - name: Build src-modern/DasBlog.Spam
+        run: dotnet build src-modern/DasBlog.Spam/DasBlog.Spam.csproj --nologo
+
+      - name: Golden-diff gate - spam (dotnet test against modernization/spam/golden/*.txt)
+        run: python3 scripts/golden-diff.py src-modern/DasBlog.Spam.Tests/DasBlog.Spam.Tests.csproj
