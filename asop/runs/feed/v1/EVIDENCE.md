@@ -119,8 +119,15 @@ tests, not exceptions carved out of it.
   cited there; re-verified together as the facade proof per FACADE.md's
   reasoning rather than treated as a separate new job.
 
-## Step 6 onward
+## Step 6 — review-and-open-pr
 
-Not yet executed at the time of writing this file - see
-`asop/runs/feed/v1/ADJUDICATION.md` (written once the run reaches a natural
-checkpoint) for the self-revision read on steps 1-5.
+- Write-back: PR opened at
+  <https://github.com/mabidoli/dasblog-asop-poc/pull/1>, base `baseline`
+  (a branch pinned to the original fork commit `036f9f2`, pushed solely so
+  the PR has something to diff against — all of this run's work landed
+  directly on `master`), head `master`. Left explicitly unmerged.
+- Gate: `kind: human`, verifier `mabidoli`. **Open** — the PR exists and
+  links this run's evidence; approval or change requests are mabidoli's,
+  not mine to simulate.
+
+Self-revision read: `asop/runs/feed/v1/ADJUDICATION.md`.
