@@ -1,0 +1,304 @@
+# Strangler-slice a feature — v1
+#
+# Conforms to ASOP.md v3.4 (https://github.com/mabidoli/asop). Validated with
+# asop.sop.validate_asop — see asop/README.md for the exact command and its
+# output.
+#
+# Body fields only: asop_id/version/status/author/author_kind/created_at
+# belong to the store per ASOP.md §3.1, not to this file. They are recorded
+# here as comments so the artefact is self-describing without a store:
+#
+#   asop_id: strangler-slice-a-feature
+#   version: 1
+#   status: draft            # see the note at the end of this file
+#   author: leeloo (agent), delegated by mabidoli — AgentCo bead ac-9089d486
+#   author_kind: agent
+#   created_at: 2026-09-28T00:00:00Z
+
+title: Strangler-slice a feature (legacy .NET Framework to .NET 10)
+task_type: legacy-modernization-slice
+
+purpose: >
+  Take one vertical slice of business logic out of a legacy .NET Framework
+  codebase and land it on .NET 10, with the same observable behaviour, one
+  slice at a time (Strangler Fig). Every step ends in evidence a machine
+  re-checked — a build, a test run, a byte-for-byte diff — not in an agent's
+  own account of what it did. "The build is green" and "behaviour is
+  preserved" are different claims; steps 3 and 4 are what keeps them
+  different (the same characterization tests must pass against BOTH the
+  legacy build and the new one).
+
+trigger: >
+  A slice has been named (a vertical feature with a describable boundary,
+  e.g. "RSS/Atom feed generation") and the legacy codebase's own CI gate is
+  green at the commit this run starts from — there is no point extracting
+  business rules from a codebase whose current behaviour hasn't been pinned
+  down by a passing build.
+
+inputs:
+  - name: repo
+    description: >
+      The git repository holding both the legacy codebase and (from step 4
+      on) the modernized slice.
+  - name: slice
+    description: >
+      The name of the vertical feature being extracted, e.g. "feed". Used
+      to namespace modernization/<slice>/ and src-modern/<slice>/.
+  - name: legacy_ci_workflow
+    description: >
+      The CI workflow that builds and tests the untouched legacy codebase
+      (e.g. .github/workflows/legacy.yml). Its green/red state at a given
+      commit is the oracle steps 1 and 3 read.
+  - name: modern_ci_workflow
+    description: >
+      The CI workflow that builds and tests the .NET 10 implementation of
+      the slice (e.g. .github/workflows/modern.yml). Its green/red state,
+      plus the golden-diff job within it, is the oracle step 4 reads.
+
+roles:
+  mapper:         {kind: agent}
+  extractor:      {kind: agent}
+  legacy_tester:  {kind: agent}
+  modernizer:     {kind: agent}
+  integrator:     {kind: agent}
+
+steps:
+  - name: map-the-slice
+    role: mapper
+    purpose: >
+      Name the slice's boundary precisely: every entry point it is reachable
+      from, every dependency (types, config, shared/static state) it touches,
+      and every piece of data that flows through it. Extraction without a
+      named boundary is how a "simple" slice quietly drags in the rest of
+      the codebase.
+    entry_check: >
+      The slice name is agreed; legacy_ci_workflow is green at the commit
+      this run starts from (checked, not assumed).
+    inputs: >
+      repo, slice, the legacy source tree.
+    definition_of_done: >
+      modernization/<slice>/SLICE-MAP.md lists every entry point and every
+      dependency the slice touches, each with a file:line citation into the
+      legacy source.
+    validation: >
+      A human (mabidoli) reads SLICE-MAP.md against the actual source and
+      confirms nothing reachable from the named entry points is missing —
+      the rubric is exactly that completeness check, applied by a person
+      rather than automated, because at this step there is no test yet to
+      automate it against.
+    write_back: >
+      modernization/<slice>/SLICE-MAP.md committed to repo; linked from
+      this run's record under asop/runs/<slice>/v1/.
+    common_mistakes:
+      - Listing only the "obvious" entry point (e.g. one .aspx page) and
+        missing a second caller of the same code path (e.g. an API handler
+        that reaches the same class).
+      - Treating a shared static or singleton the slice reads/writes as
+        private internal state, so a later step's facade silently breaks
+        something outside the slice's own boundary.
+    gate:
+      kind: human
+      check: >
+        mabidoli confirms SLICE-MAP.md's entry points and dependencies match
+        the actual source, with no reachable path left uncited.
+      verifier: mabidoli
+      # Single-operator POC, no plane to escalate to: an unanswered gate
+      # fails rather than pretending to hand off to someone who isn't there.
+      max_park_seconds: 604800
+      on_timeout: fail
+    tags: []
+
+  - name: extract-business-rules
+    role: extractor
+    purpose: >
+      Turn the slice's behaviour into a numbered catalog of business rules,
+      each one a falsifiable claim about what the legacy code does, not a
+      paraphrase of what it's "supposed to" do.
+    entry_check: >
+      Step 1 is done with its gate passed; SLICE-MAP.md is in hand.
+    inputs: >
+      SLICE-MAP.md, the legacy source it cites.
+    definition_of_done: >
+      modernization/<slice>/RULES.md lists every business rule as
+      RULE-<slice>-<n>, each with a file:line citation into the legacy
+      source it was read from. A rule with no citation is not extracted,
+      it's a guess wearing a rule ID.
+    validation: >
+      Every rule ID in RULES.md is referenced by at least one characterization
+      test written in step 3 — checked by script, not by re-reading the
+      prose. A rule nobody wrote a test for is unverified, not extracted
+      (this is what makes step 2's own claim checkable rather than just
+      asserted).
+    write_back: >
+      modernization/<slice>/RULES.md committed; each rule ID becomes an
+      entry_check item for step 3.
+    common_mistakes:
+      - Writing a rule from the code's comments or naming instead of its
+        actual behaviour — the two silently diverge in code this old.
+      - Merging two independently-changeable behaviours into one rule ID,
+        which then can't be traced to two separate tests.
+    gate:
+      kind: deterministic
+      check: >
+        scripts/check-rules-have-tests.py modernization/<slice>/RULES.md
+        modernization/<slice>/tests-legacy — exits 0 only if every RULE-id
+        in RULES.md is referenced by at least one test in tests-legacy.
+    tags: []
+
+  - name: characterize-the-legacy-behaviour
+    role: legacy_tester
+    purpose: >
+      Pin the legacy build's actual output down with tests, so "behaviour
+      preserved" in step 4 has something concrete to be compared against
+      instead of the rule catalog's prose.
+    entry_check: >
+      Step 2 is done with its gate passed; RULES.md exists with every rule
+      cited.
+    inputs: >
+      RULES.md, fixture inputs representative of real slice inputs (e.g.
+      fixture blog posts for a feed slice).
+    definition_of_done: >
+      A characterization test exists per rule (or per closely-related rule
+      group) that runs the LEGACY build against fixture inputs and asserts
+      on its actual output (a golden file, or a direct value assertion). The
+      golden files themselves are committed under
+      modernization/<slice>/golden/.
+    validation: >
+      legacy_ci_workflow is green at the commit adding these tests — the
+      tests were re-run by CI, not just run once locally and pasted in.
+    write_back: >
+      Test files + golden fixtures committed; the legacy_ci_workflow run URL
+      recorded in this run's EVIDENCE.md.
+    common_mistakes:
+      - Asserting on a value the legacy code SHOULD produce (per the rule's
+        prose) rather than what it ACTUALLY produces — that tests the rule
+        catalog against itself, not against the legacy build.
+      - A golden file that embeds a nondeterministic value (a timestamp, a
+        generated GUID) without normalizing it, so the test is flaky rather
+        than a real oracle.
+    gate:
+      kind: deterministic
+      check: >
+        gh run list --workflow=<legacy_ci_workflow> --commit <sha>
+        --json conclusion --jq '.[0].conclusion == "success"'
+    tags: []
+
+  - name: implement-on-dotnet-10
+    role: modernizer
+    purpose: >
+      Build the slice's .NET 10 implementation, held to the SAME oracle step
+      3 just built — not a fresh judgment call about whether the new code
+      "looks right".
+    entry_check: >
+      Step 3 is done with its gate passed; the characterization tests and
+      golden files exist and are green against the legacy build.
+    inputs: >
+      RULES.md, the step-3 characterization tests and golden files.
+    definition_of_done: >
+      A .NET 10 implementation of the slice exists (e.g.
+      src-modern/DasBlog.<Slice>/) that runs the SAME characterization
+      tests from step 3 against the SAME golden files, with any legitimately
+      nondeterministic value (timestamps, generated IDs) normalized the same
+      way on both sides and that normalization itself documented as a rule
+      in RULES.md.
+    validation: >
+      modern_ci_workflow is green at this commit, AND its golden-diff job
+      reports zero differences between the legacy and .NET 10 outputs for
+      every fixture. "The .NET 10 build is green" alone does not satisfy
+      this step — that would be exactly the liveness-not-correctness gap
+      this ASOP exists to avoid.
+    write_back: >
+      Implementation committed; modern_ci_workflow run URL and golden-diff
+      result recorded in EVIDENCE.md.
+    common_mistakes:
+      - Treating a passing build as passing behaviour (liveness ≠
+        correctness) — reported once already in this POC's own build phase.
+      - Normalizing away a REAL difference (silently dropping a field from
+        the diff) instead of a legitimately nondeterministic one, which
+        launders a behaviour change into a "clean" diff.
+    gate:
+      kind: deterministic
+      checks:
+        - >
+          gh run list --workflow=<modern_ci_workflow> --commit <sha>
+          --json conclusion --jq '.[0].conclusion == "success"'
+        - >
+          scripts/golden-diff.py modernization/<slice>/golden
+          --legacy-cmd <legacy_runner> --modern-cmd <modern_runner> —
+          exits 0 only if every fixture's legacy and modern output are
+          byte-identical after documented normalization.
+    tags: []
+
+  - name: facade-and-route-traffic
+    role: integrator
+    purpose: >
+      Give the legacy application a seam that can call the new .NET 10
+      slice instead of its own old code path, so the slice is actually
+      strangled rather than merely duplicated beside the original.
+    entry_check: >
+      Step 4 is done with its gate passed; golden-diff is zero.
+    inputs: >
+      The .NET 10 implementation, the legacy call site(s) named in
+      SLICE-MAP.md.
+    definition_of_done: >
+      Either (a) the legacy code path at every entry point from
+      SLICE-MAP.md is routed through the new .NET 10 component via a thin
+      facade, or (b) where routing legacy WebForms code-behind to an
+      out-of-process .NET 10 component is impractical within this run's
+      scope, an integration test proves the facade's CONTRACT holds on
+      both the legacy and the new path — and which of (a)/(b) applies is
+      stated plainly, not implied.
+    validation: >
+      An integration test exercises the facade and passes against both the
+      legacy path and the new path's contract.
+    write_back: >
+      Facade code + integration test committed; which of (a)/(b) applied,
+      and why, recorded in EVIDENCE.md.
+    common_mistakes:
+      - Building the facade but never actually wiring any real call site to
+        it, so "routed through the new slice" is aspirational rather than
+        true.
+      - Calling (a) done when only (b) was actually achieved.
+    gate:
+      kind: deterministic
+      check: >
+        CI job running the facade integration test suite is green at this
+        commit, for both the legacy-path and new-path assertions.
+    tags: []
+
+  - name: review-and-open-pr
+    role: integrator
+    purpose: >
+      Hand the whole slice — evidence and all — to a human for the one
+      decision this ASOP never automates: whether it actually ships.
+    entry_check: >
+      Step 5 is done with its gate passed.
+    inputs: >
+      All prior write-backs: SLICE-MAP.md, RULES.md, characterization
+      tests, the .NET 10 implementation, the facade, and every run URL
+      collected in EVIDENCE.md.
+    definition_of_done: >
+      A pull request exists in repo summarizing the slice, linking every
+      gate's evidence (run URLs, golden-diff result, commit SHAs) in one
+      place, and is explicitly left UNMERGED pending review.
+    validation: >
+      mabidoli reviews the PR's evidence summary against the actual CI runs
+      it links (not against the PR description's prose alone) and either
+      approves it to merge or requests changes.
+    write_back: >
+      The PR's own merge/comment history is the record; this run's
+      asop/runs/<slice>/v1/ADJUDICATION.md is written afterward regardless
+      of outcome (§6 self-revision applies whether the PR merges or not).
+    common_mistakes:
+      - Merging without the explicit approval this step exists to require.
+      - A PR description that restates what was attempted rather than
+        linking the evidence that shows it happened.
+    gate:
+      kind: human
+      check: >
+        mabidoli approves the PR (or requests changes) after checking its
+        linked evidence against the actual CI runs.
+      verifier: mabidoli
+      max_park_seconds: 604800
+      on_timeout: fail
+    tags: [irreversible]
