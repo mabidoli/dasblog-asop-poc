@@ -44,16 +44,6 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Install .NET Framework targeting packs (v4.0, v4.5)
-        # windows-latest ships the netfx4.8 runtime/dev pack but not the
-        # older targeting packs this solution's csproj files declare
-        # (TargetFrameworkVersion v4.0 / v4.5). Installing the missing
-        # reference-assembly packs is the minimal, legacy-faithful fix —
-        # it changes nothing in source, only what the runner has on disk.
-        run: |
-          choco install netfx-4.0-devpack -y --no-progress
-          choco install netfx-4.5-devpack -y --no-progress
-
       - name: Build source/DasBlog.sln (Debug | Any CPU)
         run: >
           msbuild "source\DasBlog.sln"
