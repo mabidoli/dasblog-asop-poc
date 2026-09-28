@@ -28,15 +28,20 @@ AgentCo bead: `ac-9089d486`.
   equivalents of every deterministic CI gate), `scripts/run_asop.py` +
   `scripts/run-asop.ps1` (a thin, harness-independent step-walker — see
   `RUNBOOK-WINDOWS.md` for why it doesn't use
-  `agentco_harness.asop_store`), `RUNBOOK-WINDOWS.md`, this file. **Done**,
-  reported, awaiting a go before Phase 3.
-- **Phase 3 — self-revision loop, v1→v4.** NOT executed yet. See "Iteration
-  loop" below for the shape and "Budget" for the stop condition. Waiting
-  on mabidoli's go per the team lead's last instruction.
-- **Phase 4 (stretch) — a second slice**, to test whether v(final)
-  generalizes beyond feed generation. Candidates from the original review:
-  comment spam filter, trackback/pingback parsing (both named in the
-  original task brief as "small" second-slice candidates). Not started.
+  `agentco_harness.asop_store`), `RUNBOOK-WINDOWS.md`, this file. **Done**.
+- **Phase 3 — v2 authored and run against slice 2.** `v2.yaml` applies
+  exactly the three fixes v1's `ADJUDICATION.md` proposed
+  (`asop/strangler-slice-a-feature/CHANGELOG.md`). Slice 2: the Akismet
+  spam-check request mapping, chosen over trackback/pingback parsing after
+  reading both candidates' actual code
+  (`modernization/spam/SLICE-MAP.md`). **Done** through step 6 — PR #2
+  open, unmerged. Surfaced a real, previously undocumented legacy bug
+  (RULE-spam-10), faithfully reproduced rather than fixed. **Done**,
+  reported, awaiting a go before v3.
+- **Phase 4 — v3+.** NOT executed yet. `asop/runs/spam/v2/ADJUDICATION.md`
+  has one concrete v3 proposal (workflow-level success claims need to
+  assert something concrete about their own output, not just "no error").
+  Waiting on a go.
 
 ## Iteration loop (v1 → v4)
 
@@ -70,12 +75,25 @@ budget) and report honestly if v4 still has open bad divergences.
 Table shape used in `asop/runs/feed/v1/ADJUDICATION.md` — carry it forward
 for every version so they're comparable:
 
-| Version | CI/local iterations to green (per step) | Bad divergences | Gate failures caught | Human interventions | Wall time |
-|---|---|---|---|---|---|
-| v1 | Phase 0: 8, step 3: +6, step 4: +1 | 2 (see ADJUDICATION.md) | 2 gate-proof/build-order dead ends caught before landing | 0 (both human gates still open) | one continuous session |
-| v2 | — | — | — | — | — |
-| v3 | — | — | — | — | — |
-| v4 | — | — | — | — | — |
+| Version | Slice | CI/local iterations to green (per step) | Bad divergences | Good divergences | Gate failures caught | Bugs found in legacy code | Human interventions | Wall time |
+|---|---|---|---|---|---|---|---|---|
+| v1 | feed | Phase 0: 8, step 3: +6, step 4: +1 | 2 (see ADJUDICATION.md) | 1 (RULE-feed-17/18/19 surfaced at step 4, not step 2 — self-revision working as designed) | 2 gate-proof/build-order dead ends caught before landing | 0 | 0 (both human gates still open) | one continuous session |
+| v2 | spam | step 3: 4, step 4: 1 | 1 (a green capture-golden run that silently captured nothing) | 3 (park-and-continue worked disclosed; the v2 common_mistakes additions held; local-iteration paid off again) | 1 new (the workflow-success blind spot) | 1 (RULE-spam-10 — a real `&`/`&&` bug, faithfully reproduced, not fixed) | 0 (both human gates still open) | same continuous session, immediately after v1 |
+| v3 | — | — | — | — | — | — | — | — |
+| v4 | — | — | — | — | — | — | — | — |
+
+**Confounders, named rather than left implicit**: v2 ran against a
+DIFFERENT slice than v1 (spam vs. feed) — the lower iteration count for
+step 3 (4 vs. 14) is mostly explained by v1 having ALSO built the legacy
+build oracle from scratch (Phase 0's 8 iterations are pure
+infrastructure, not repeated for v2), not by v2.yaml's own text changes
+being responsible for the drop. There is also a real learning effect
+(the same executor ran both) that a genuinely independent comparison
+would need to control for and this POC cannot. What v2.yaml's own changes
+plausibly DID cause: zero repeats of v1's exact two bad divergences (the
+gate-proof-on-an-uncompiled-test mistake, and silent proceeding past an
+open human gate) — a narrower, more defensible claim than "v2 is
+faster."
 
 "The procedure got better per slice, with numbers" (the review doc's own
 bar for what makes this different from "the agent migrated a blog") needs
