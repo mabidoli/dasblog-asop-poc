@@ -1,0 +1,9 @@
+Author: (null)
+AuthorEmail: (null)
+AuthorUrl: (null)
+Content: (null)
+Referer: (null)
+Permalink: (null)
+UserAgent: (null)
+CommentType: pingback
+IpAddress: 255.255.255.255
