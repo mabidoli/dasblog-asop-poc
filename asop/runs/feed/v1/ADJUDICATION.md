@@ -24,6 +24,29 @@ hypothetical.
    BOTH step 1 and step 6's gates together — workable this once, but not a
    pattern to repeat by default.
 
+   **Two alternative shapes for v2**, either preferable to "trust the
+   executor to behave" (per the team lead's steer on this item):
+   - **Park-and-continue, made explicit in the ASOP contract**: a step
+     whose gate is `human` and unanswered files its OWN follow-on work as
+     `PENDING_APPROVAL` (the harness's `intake.require_approval` semantics,
+     `harness/README.md`'s "inverse shadow" mode, already exist for
+     exactly this — a bead is born held, never silently promoted) rather
+     than either blocking the whole run or letting the executor guess.
+     Steps 2-5 could then execute and gate genuinely (their evidence
+     doesn't depend on step 1's outcome), while step 1's OWN output stays
+     visibly unapproved until reviewed — different from what actually
+     happened here, where nothing marked the state as held at all.
+   - **Split step 1's gate into judged + human**, matching the original
+     `ASOP-MODERNIZATION-REVIEW.md` draft's "judged + human" note for this
+     exact step (simplified to `human`-only during authoring — see
+     `asop/strangler-slice-a-feature/v1.yaml`'s header comment): a
+     `judged` rubric-completeness check could run and gate automatically
+     (catching the "missing entry point" class of mistake immediately),
+     with the `human` sign-off as a distinct, later step that can
+     genuinely park without blocking the judged check's own value.
+   Neither was implemented in v1 — both are real options for v2, not a
+   claim that one is obviously right.
+
 2. **My first gate-proof attempt (Phase 0c, not an ASOP step but the same
    run) broke a test that wasn't even compiled into the project**
    (`AppTest.cs` isn't in `newtelligence.DasBlog.Util.Test.csproj`'s
