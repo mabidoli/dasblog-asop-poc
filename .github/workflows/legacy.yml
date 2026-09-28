@@ -55,7 +55,7 @@ jobs:
           msbuild "source\DasBlog.sln"
           /p:Configuration=Debug
           /p:Platform="Any CPU"
-          /m
+          /m:1
           /nologo
           /v:minimal
           /p:TreatWarningsAsErrors=false
