@@ -65,6 +65,39 @@ v1's own AppTest.cs incident) warns about, just one level up: a green
 WORKFLOW is not evidence the workflow did the thing you think it did,
 either. See `ADJUDICATION.md` for the proposal this generates for v3.
 
-## Step 4 onward
+## Step 4 — implement-on-dotnet-10
+
+- Write-back: `src-modern/DasBlog.Spam/` (`Feedback`, `AkismetComment`,
+  `AkismetCommentMapper`, `AkismetCommentSerializer`),
+  `src-modern/DasBlog.Spam.Tests/` (the same 4 fixtures as the legacy
+  side, asserted against the same committed golden files).
+- Local verification first: `dotnet test
+  src-modern/DasBlog.Spam.Tests` — 4/4 passed, byte-for-byte, before ever
+  pushing (per v2's own added purpose text — iterate locally when the
+  target runtime allows it).
+- Gate: **PASSED, first CI attempt**:
+  <https://github.com/mabidoli/dasblog-asop-poc/actions/runs/36498987392>
+  (`modern.yml`, both the feed and spam golden-diff gates green in the
+  same run).
+- **Faithful bug reproduction, not a silent fix**: `AkismetCommentMapper.Convert`
+  reproduces RULE-spam-10's `&`-not-`&&` crash on a null `TargetEntryId`
+  exactly — same operator semantics in C# on .NET 10, confirmed by the
+  4th test (`NullTargetEntryId_ThrowsNullReferenceException`) passing on
+  both sides. This is the ASOP's own "preserve the SAME observable
+  behaviour" requirement taken literally, bug included; "fix" is a
+  separate, later, explicit decision this run does not make silently.
+
+## Step 5 — facade-and-route-traffic
+
+- Write-back: `modernization/spam/FACADE.md`.
+- **Option (b) taken, stated plainly** — same class of reason as slice 1
+  (different runtimes, no interop bridge), plus this class's own
+  dependency on a real ASP.NET hosting environment for the deferred
+  RULE-spam-D1 path.
+- Gate: **PASSED** — the same `legacy.yml`/`modern.yml` pair from steps
+  3/4, both green at the commits cited there, re-verified together as the
+  facade proof per `FACADE.md`'s reasoning.
+
+## Step 6 onward
 
 Not yet executed at the time of writing this file.
