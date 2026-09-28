@@ -63,7 +63,47 @@ Golden files reviewed by hand before commit (not just "captured and
 trusted") - see the golden-file commit message for what was checked in
 each one against `RULES.md`.
 
-## Step 4 onward
+## Step 4 — implement-on-dotnet-10
+
+- Write-back: `src-modern/DasBlog.Feed/` (the port: ported `Rss20` DTOs,
+  `RssFeedBuilder`, `RssFeedSerializer`), `src-modern/DasBlog.Feed.Tests/`
+  (the same two fixtures as the legacy characterization tests, asserted
+  against the same committed golden files).
+- Local verification first (no .NET Framework on this Mac, but .NET 10
+  installed via `dotnet-install.sh --channel 10.0` and runs natively):
+  `dotnet test src-modern/DasBlog.Feed.Tests` — 2/2 passed, byte-for-byte,
+  before ever pushing.
+- Gate: `checks` (staged) —
+  1. `gh run list --workflow=<modern_ci_workflow> --commit <sha> ...` —
+     **PASSED**, first attempt:
+     <https://github.com/mabidoli/dasblog-asop-poc/actions/runs/36444318253>
+     (`modern.yml`, ubuntu-latest, `actions/setup-dotnet` 10.0.x, commit
+     `4e502fc`).
+  2. `scripts/golden-diff.py src-modern/DasBlog.Feed.Tests/...` — **PASSED**
+     as part of the same CI run (the workflow's own gate step). Per the
+     script's own design (see its docstring), this proves
+     `legacy == golden` (step 3's gate) AND `modern == golden` (this gate)
+     together, which is `legacy == modern` by transitivity — checked twice
+     independently rather than computed once and trusted.
+
+Three rules the legacy SOURCE reading (step 2) missed, surfaced only by
+actually trying to reproduce the golden files byte-for-byte — added to
+`RULES.md` as RULE-feed-17/18/19 rather than silently patched around:
+- `<generator>` is a hardcoded legacy-assembly-version string
+  (`"newtelligence dasBlog 4.0.0.0"`), not derivable in a port.
+- The custom `xmlns` declaration order in the golden files doesn't match
+  the legacy source's own `.Add(...)` call order.
+- `XmlSerializer`'s auto-declared `xmlns:xsi`/`xmlns:xsd` order is opposite
+  between .NET Framework and .NET 10, and empirically not controllable via
+  insertion order on the .NET 10 side at all — normalized as a documented
+  string swap.
+
+This is exactly the ASOP's own self-revision premise (divergence is
+input, ASOP.md §6.1) working as intended: step 2's gate (every rule has a
+test) still held, because these three became NEW rules with their own
+tests, not exceptions carved out of it.
+
+## Step 5 onward
 
 Not yet executed at the time of writing this file - see
 `asop/runs/feed/v1/ADJUDICATION.md` (written once the run reaches a natural
