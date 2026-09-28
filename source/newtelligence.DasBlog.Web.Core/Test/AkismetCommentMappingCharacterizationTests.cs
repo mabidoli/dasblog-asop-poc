@@ -64,7 +64,11 @@ namespace newtelligence.DasBlog.Web.Core.Test
 			feedback.FeedbackType = "comment";
 			feedback.Content = "Great post!";
 			feedback.Referer = "http://referrer.example.test/";
-			feedback.TargetEntryId = null; // RULE-spam-08 (empty path); RULE-spam-D1 deferred
+			// Empty, NOT null - RULE-spam-10 is what happens when it's null
+			// (a real bug: '&' not '&&' at AkismetSpamBlockingService.cs:63
+			// means a null TargetEntryId throws instead of being treated as
+			// blank). RULE-spam-D1 (populated Permalink) stays deferred.
+			feedback.TargetEntryId = "";
 
 			AssertMatchesGolden("full-feedback-no-target-entry", feedback);
 		}
@@ -105,6 +109,30 @@ namespace newtelligence.DasBlog.Web.Core.Test
 			feedback.TargetEntryId = "";
 
 			AssertMatchesGolden("minimal-feedback-nulls", feedback);
+		}
+
+		[Test]
+		public void NullTargetEntryId_ThrowsNullReferenceException()
+		{
+			// RULE-spam-10 - a REAL legacy bug, found by this characterization
+			// test, not invented: AkismetSpamBlockingService.cs:63 reads
+			//   if (feedback.TargetEntryId != null & feedback.TargetEntryId.Trim().Length > 0)
+			// using bitwise '&', not short-circuiting '&&'. Both sides
+			// evaluate even when TargetEntryId IS null, so
+			// `.Trim()` runs on a null reference. This slice characterizes
+			// the bug AS-IS (Strangler Fig preserves observable behaviour,
+			// bugs included, until a separate, explicit decision changes
+			// it) - the .NET 10 port reproduces the same throw, not a
+			// silent fix. See modernization/spam/RULES.md RULE-spam-10 and
+			// asop/runs/spam/v2/ADJUDICATION.md.
+			FakeFeedback feedback = new FakeFeedback();
+			feedback.Author = "Someone";
+			feedback.FeedbackType = "comment";
+			feedback.TargetEntryId = null;
+
+			TargetInvocationException ex = Assert.Throws<TargetInvocationException>(
+				delegate { ConvertToAkismetComment(feedback); });
+			Assert.IsInstanceOf<NullReferenceException>(ex.InnerException);
 		}
 
 		private void AssertMatchesGolden(string fixtureName, IFeedback feedback)

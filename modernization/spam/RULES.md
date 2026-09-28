@@ -28,12 +28,26 @@ rules must each be referenced by at least one characterization test
 - **RULE-spam-07** — `Referer` copied verbatim.
   `AkismetSpamBlockingService.cs:62`
 - **RULE-spam-08** — `Permalink` stays unset when `feedback.TargetEntryId`
-  is null or blank after `Trim()` (the "empty" path only — the
-  "populated" path is RULE-spam-D1, deferred).
+  is a non-null string that is blank after `Trim()` (the "empty, but not
+  null" path only — the "populated" path is RULE-spam-D1, deferred; the
+  null path is RULE-spam-10, below — not the same code path).
   `AkismetSpamBlockingService.cs:63-70`
 - **RULE-spam-09** — `CommentType` copied verbatim from
   `feedback.FeedbackType`.
   `AkismetSpamBlockingService.cs:71`
+- **RULE-spam-10** — a real bug, found by characterizing this method, not
+  invented: line 63 reads
+  `feedback.TargetEntryId != null & feedback.TargetEntryId.Trim().Length > 0`
+  using bitwise `&`, not short-circuiting `&&`. Both operands evaluate
+  even when `TargetEntryId` IS null, so `.Trim()` runs on a null
+  reference and the method throws `NullReferenceException` (wrapped in
+  `TargetInvocationException` when invoked via reflection, as this
+  slice's tests do) instead of gracefully treating a null `TargetEntryId`
+  the same as an empty one. Characterized AS-IS per Strangler Fig's own
+  discipline — this slice preserves observable behaviour, bugs included,
+  until a separate, explicit decision changes it; the .NET 10 port
+  (step 4) reproduces the same throw rather than silently fixing it.
+  `AkismetSpamBlockingService.cs:63`
 
 ## Explicitly deferred (named, not silently dropped)
 
