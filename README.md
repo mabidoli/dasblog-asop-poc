@@ -1,3 +1,18 @@
+> **This fork is an experiment, not a product.** It is a public proof-of-concept for
+> **ASOP-driven legacy modernization**: taking one vertical slice of this .NET Framework
+> codebase to .NET 10 at a time, using a written, versioned procedure (an
+> [ASOP](https://github.com/mabidoli/asop) — Agentic Standard Operating Procedure) where
+> every step is gated by CI evidence (build/test/golden-file diff), not by an agent's own
+> say-so. It is unaffiliated with the original project or its maintainer.
+>
+> - Upstream (the real thing): [shanselman/dasblog](https://github.com/shanselman/dasblog)
+> - A human-written modern port, used here only as an independent reference point (not a
+>   dependency of this POC): [poppastring/dasblog-core](https://github.com/poppastring/dasblog-core)
+> - The ASOP that drives the modernization work, and the evidence for each run, live under
+>   [`asop/`](./asop) in this repo.
+>
+> Everything below the next heading is the original upstream README, unmodified.
+
 # dasblog
 The old, wonderful, and scalable DasBlog Blogging Engine
 
