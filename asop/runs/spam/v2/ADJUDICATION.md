@@ -49,11 +49,18 @@ Per ASOP.md §6.1/§6.3. Self-adjudicated (same disclosed limitation as
 
 ## Outcome
 
-Slice 2 (Akismet spam-check request mapping) completed steps 1-5 with real
+Slice 2 (Akismet spam-check request mapping) completed steps 1-6 with real
 CI evidence for every deterministic gate, including a genuine legacy bug
 (RULE-spam-10) found by characterization and faithfully reproduced rather
-than silently fixed. Step 1's human gate is open (PROVISIONAL, per v2);
-step 6 is this run's PR, opened next.
+than silently fixed.
+
+**Update 2026-09-28T23:57:50Z**: both human gates (step 1, step 6) are now
+closed — mabidoli merged PR #2
+(<https://github.com/mabidoli/dasblog-asop-poc/pull/2>) with no separate
+written review comments. Recorded honestly in `EVIDENCE.md`: the merge is
+the approval signal for both gates. Every PROVISIONAL marking from
+PARK-AND-CONTINUE is lifted as of this timestamp, and no boundary error
+was raised against `SLICE-MAP.md`.
 
 One structural note distinct from v1: choosing slice 2 required reading
 BOTH candidates' actual code, not just their names — the review doc's

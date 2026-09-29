@@ -2,20 +2,29 @@
 
 Per `asop/README.md`'s "how a run is actually recorded" and v2's own
 PARK-AND-CONTINUE semantics (`asop/strangler-slice-a-feature/CHANGELOG.md`).
-mabidoli's reviews for BOTH this run's step 1 and the still-open slice-1 v1
-PR are pending — this run proceeded under park-and-continue, not silent
-assumption. Every claim below links a real CI run or commit.
+This run proceeded under park-and-continue while both this run's step 1
+and PR #1 (slice "feed") were pending — not silent assumption. Every claim
+below links a real CI run or commit.
+
+**Update 2026-09-28T23:57:50Z**: mabidoli merged PR #2 (this run's step 6
+— see below), closing both this run's human gates. Every PROVISIONAL
+marking below is lifted as of that timestamp.
 
 ## Step 1 — map-the-slice
 
 - Write-back: `modernization/spam/SLICE-MAP.md`, including the
   candidate-comparison section (why Akismet mapping over trackback or
   pingback).
-- Gate: `kind: human`, verifier `mabidoli`. **Open — PROVISIONAL.** Per
-  v2's PARK-AND-CONTINUE, steps 2-6 below proceeded with this step's
-  output marked provisional. If mabidoli's review of SLICE-MAP.md finds a
-  boundary error, steps 2-6 get REVISITED, not just re-labeled (v2.yaml's
-  own step-1 write_back text).
+- Gate: `kind: human`, verifier `mabidoli`. **Closed 2026-09-28T23:57:50Z**
+  — approved via merge of PR #2
+  (<https://github.com/mabidoli/dasblog-asop-poc/pull/2>), by `mabidoli`.
+  Recorded honestly: no separate written review of SLICE-MAP.md exists
+  (`gh pr view 2 --json reviews,comments` returns empty) — the merge
+  itself is what closed this gate. Per v2's PARK-AND-CONTINUE, steps 2-6
+  below had proceeded with this step's output marked PROVISIONAL before
+  that; the PROVISIONAL marking is lifted as of the merge timestamp above,
+  and no boundary error was raised against SLICE-MAP.md, so nothing gets
+  revisited.
 
 ## Step 2 — extract-business-rules
 
@@ -104,7 +113,10 @@ either. See `ADJUDICATION.md` for the proposal this generates for v3.
   <https://github.com/mabidoli/dasblog-asop-poc/pull/2>, base `v1-final`
   (a branch pinned to the commit where PR #1's slice-1 evidence was
   complete, so this PR's diff is scoped to v2-authoring +
-  Windows-packaging + slice-2 work only). Left explicitly unmerged.
-- Per v2's `definition_of_done` addition: the PR states plainly that step
-  1 is still PROVISIONAL under PARK-AND-CONTINUE.
-- Gate: `kind: human`, verifier `mabidoli`. **Open.**
+  Windows-packaging + slice-2 work only).
+- Per v2's `definition_of_done` addition: the PR stated plainly, at open
+  time, that step 1 was still PROVISIONAL under PARK-AND-CONTINUE.
+- Gate: `kind: human`, verifier `mabidoli`. **Closed 2026-09-28T23:57:50Z**
+  — merged by `mabidoli`. No written review comments on the PR — the
+  merge itself is the approval signal, recorded as such rather than
+  implied to be a line-by-line review.

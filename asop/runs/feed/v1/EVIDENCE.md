@@ -9,10 +9,13 @@ or commit, re-checkable by anyone.
 
 - Write-back: `modernization/feed/SLICE-MAP.md`, commit `dec1d5f`... through
   the slice-map commit (see `git log -- modernization/feed/SLICE-MAP.md`).
-- Gate: `kind: human`, verifier `mabidoli`. **Not yet satisfied** — this
-  run's step 1 gate is open pending mabidoli's review of SLICE-MAP.md
-  against the actual source. Recorded here as an honest open item, not
-  marked done.
+- Gate: `kind: human`, verifier `mabidoli`. **Closed 2026-09-28T23:57:07Z**
+  — approved via merge of PR #1
+  (<https://github.com/mabidoli/dasblog-asop-poc/pull/1>), by `mabidoli`.
+  Recorded honestly: this is approval via PR merge, not a separate written
+  review of SLICE-MAP.md itself — the PR carries no review comments (`gh
+  pr view 1 --json reviews,comments` returns empty for both). The merge is
+  the only signal that closes this gate.
 
 ## Step 2 — extract-business-rules
 
@@ -125,9 +128,11 @@ tests, not exceptions carved out of it.
   <https://github.com/mabidoli/dasblog-asop-poc/pull/1>, base `baseline`
   (a branch pinned to the original fork commit `036f9f2`, pushed solely so
   the PR has something to diff against — all of this run's work landed
-  directly on `master`), head `master`. Left explicitly unmerged.
-- Gate: `kind: human`, verifier `mabidoli`. **Open** — the PR exists and
-  links this run's evidence; approval or change requests are mabidoli's,
-  not mine to simulate.
+  directly on `master`), head `master`.
+- Gate: `kind: human`, verifier `mabidoli`. **Closed 2026-09-28T23:57:07Z**
+  — merged by `mabidoli`. No written review comments on the PR (`gh pr
+  view 1 --json reviews,comments` returns empty) — the merge itself is the
+  approval signal, recorded as such rather than implied to be a
+  line-by-line review.
 
 Self-revision read: `asop/runs/feed/v1/ADJUDICATION.md`.

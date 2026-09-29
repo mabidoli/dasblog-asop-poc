@@ -103,11 +103,16 @@ in HOW to execute a step when the option exists.
 ## Outcome
 
 Slice 1 (RSS 2.0 feed generation, "plain entry" scope) completed steps 1-5
-with real, re-checkable CI evidence for every deterministic gate. Step 1's
-human gate and step 6's human gate are both open, pending mabidoli's
-review of this run (SLICE-MAP.md for step 1; the PR for step 6) — this
-file and EVIDENCE.md are the record for that review, not a claim that the
-run is fully closed.
+with real, re-checkable CI evidence for every deterministic gate.
+
+**Update 2026-09-28T23:57:07Z**: both human gates (step 1, step 6) are now
+closed — mabidoli merged PR #1
+(<https://github.com/mabidoli/dasblog-asop-poc/pull/1>) with no separate
+written review comments. Recorded honestly in `EVIDENCE.md`: the merge is
+the approval signal for both gates, not evidence of a line-by-line review
+of `SLICE-MAP.md` specifically. Item 1 above (proceeding past step 1's
+gate while it was still open) is a real divergence from THIS run and
+stands as written regardless of the gate's later closure.
 
 No structural proposal (a step split, a step added, a reordering) is
 warranted from this one run — items 1 and 3 above are text/discipline
